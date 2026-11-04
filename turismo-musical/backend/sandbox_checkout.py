@@ -7,6 +7,7 @@ import base64
 import binascii
 import hashlib
 import hmac
+import logging
 import os
 import time
 import uuid
@@ -161,8 +162,20 @@ async def crear(datos: OrdenNueva, idempotency_key: str = Header(min_length=8, m
         async with httpx.AsyncClient(timeout=15.0) as http:
             await FactusPaySandbox(http, os.environ['FACTUS_PAY_TOKEN']).crear_recaudo(orden.referencia, TOTAL, 900)
         orden.estado = 'awaiting_payment'; sesion.commit()
-    except SandboxError:
-        raise HTTPException(503, 'No se pudo confirmar el recaudo Sandbox. Reintenta con la misma orden.') from None
+    except SandboxError as exc:
+        if os.getenv('FACTUS_PAY_DIAGNOSTICS') == '1':
+            logging.getLogger('ritmo.sandbox').warning('Factus Pay Sandbox: status=%s, error=%s', exc.status, str(exc))
+        if exc.status in (401, 403):
+            detail = 'Factus Pay rechazó el token Sandbox. Revisa FACTUS_PAY_TOKEN.'
+        elif exc.status == 422:
+            detail = 'Factus Pay rechazó los datos de prueba (HTTP 422). Revisa la configuración del recaudo.'
+        elif exc.status == 429:
+            detail = 'Factus Pay alcanzó su límite de solicitudes. Intenta más tarde.'
+        elif exc.status is None:
+            detail = 'Factus Pay no confirmó el recaudo. Conserva esta orden y reintenta más tarde.'
+        else:
+            detail = f'Factus Pay no confirmó el recaudo (HTTP {exc.status}). Conserva esta orden.'
+        raise HTTPException(503, detail) from None
     return mostrar(orden)
 
 @router.get('/orders/{orden_id}')
