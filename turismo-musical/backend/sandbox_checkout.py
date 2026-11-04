@@ -7,7 +7,6 @@ import base64
 import binascii
 import hashlib
 import hmac
-import logging
 import os
 import time
 import uuid
@@ -163,8 +162,6 @@ async def crear(datos: OrdenNueva, idempotency_key: str = Header(min_length=8, m
             await FactusPaySandbox(http, os.environ['FACTUS_PAY_TOKEN']).crear_recaudo(orden.referencia, TOTAL, 900)
         orden.estado = 'awaiting_payment'; sesion.commit()
     except SandboxError as exc:
-        if os.getenv('FACTUS_PAY_DIAGNOSTICS') == '1':
-            logging.getLogger('ritmo.sandbox').warning('Factus Pay Sandbox: status=%s, error=%s', exc.status, str(exc))
         if exc.status in (401, 403):
             detail = 'Factus Pay rechazó el token Sandbox. Revisa FACTUS_PAY_TOKEN.'
         elif exc.status == 422:
