@@ -20,6 +20,8 @@ from sqlalchemy import String, Text, create_engine, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
+from backend.ticketmaster import router as ticketmaster_router
+
 load_dotenv()
 MODO = os.getenv('APP_MODE', 'demo')
 DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./turismo.db')
@@ -52,6 +54,7 @@ class Orden(Base):
     historial: Mapped[str] = mapped_column(Text, default='created,awaiting_payment')
 
 app = FastAPI(title='Ritmo - demo turismo musical', version='0.1.0')
+app.include_router(ticketmaster_router)
 app.add_middleware(CORSMiddleware, allow_origins=[x.strip() for x in os.getenv('CORS_ORIGINS','http://localhost:5173').split(',') if x.strip()], allow_methods=['GET','POST'], allow_headers=['Content-Type','Idempotency-Key','X-Order-Key'])
 
 @app.on_event('startup')
