@@ -1,0 +1,30 @@
+# Configuración privada
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Entornos Python y cachés
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Dependencias y salidas temporales
+node_modules/
+*.log
+tmp/
+coverage/
+.DS_Store
+Thumbs.db
+
+# Exports locales de Postman: solo se publica la plantilla vacía
+*.postman_environment.json
+!postman/environments/API_Wars_Sandbox.postman_environment.json
+postman/environments/*local*
+postman/environments/*private*
+postman/environments/*secret*
