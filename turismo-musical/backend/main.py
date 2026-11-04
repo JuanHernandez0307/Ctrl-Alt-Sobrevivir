@@ -129,7 +129,7 @@ def salida(orden: Orden):
 
 @app.get('/api/v1/health')
 def salud():
-    return {'status':'ok','modo':MODO,'integraciones_reales':False}
+    return {'status':'ok','modo':MODO,'base_datos':engine.url.get_backend_name(), 'catalogo_ticketmaster_configurado':bool(os.getenv('TICKETMASTER_API_KEY')), 'factus_sandbox_configurado':all(os.getenv(k) for k in ('FACTUS_PAY_TOKEN','FACTUS_USERNAME','FACTUS_PASSWORD','FACTUS_CLIENT_ID','FACTUS_CLIENT_SECRET'))}
 
 @app.get('/api/v1/events')
 def eventos(q: str = '', pais: str = ''):
@@ -212,3 +212,7 @@ def ticket(orden_id: str, x_order_key: str | None = Header(default=None), sesion
     pdf.drawString(48, 610, 'Este documento no constituye una factura electronica.')
     pdf.showPage(); pdf.save(); buffer.seek(0)
     return StreamingResponse(buffer, media_type='application/pdf', headers={'Content-Disposition':'attachment; filename="boleto-demo.pdf"','Cache-Control':'no-store'})
+
+# El router registra su tabla antes de que se ejecute el evento de inicio.
+from backend.sandbox_checkout import router as sandbox_router
+app.include_router(sandbox_router)
