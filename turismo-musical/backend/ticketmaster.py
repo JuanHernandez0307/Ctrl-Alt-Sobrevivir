@@ -6,6 +6,7 @@ import logging
 import os
 import time
 from collections import OrderedDict
+from datetime import datetime, timezone
 from typing import Any
 
 import httpx
@@ -56,7 +57,8 @@ async def eventos_ticketmaster(q: str = Query(default='', max_length=80),
         await asyncio.sleep(max(0, 0.25 - (ahora - _last_request)))
         _last_request = time.monotonic()
         _requests.append(_last_request)
-        params = {'apikey': token, 'classificationName': 'music', 'size': 20, 'sort': 'date,asc'}
+        params = {'apikey': token, 'classificationName': 'music', 'size': 20, 'sort': 'date,asc',
+                  'startDateTime': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
         if q.strip(): params['keyword'] = q.strip()
         if pais: params['countryCode'] = pais.upper()
         try:
